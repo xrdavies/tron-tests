@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.5.0 <0.8.0;
+pragma solidity >=0.4.22 <0.8.0;
 
-import "./ERC20/ERC20Detailed.sol";
-import "./ERC20/ERC20.sol";
+import "./lib/ERC20Detailed.sol";
+import "./lib/ERC20.sol";
 
 contract ERC20Token is ERC20Detailed, ERC20 {
 
@@ -13,7 +13,7 @@ contract ERC20Token is ERC20Detailed, ERC20 {
         _;
     }
 
-    constructor(string memory name, string memory symbol, uint8 decimals, address owner)
+    constructor(string memory name, string memory symbol, address owner, uint8 decimals)
         ERC20Detailed(name, symbol, decimals) public
     {
         // minter = _msgSender();
