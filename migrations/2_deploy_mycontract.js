@@ -17,13 +17,19 @@ module.exports = function(deployer, networkName, accounts) {
     console.log('[1] MyContract Address: ', MyContract.address);
 
   }).then(async ()=>{ // Create token directly with script
+    // Using TronBox
     await deployer.deploy(ERC20Token, "FirstToken", "FTT", 18, tronWrap.address.toHex(accounts));
-
     let token = await ERC20Token.deployed();
-    console.log('[2] Token address: ', token.address);
-
+    console.log('[2] Token1 address: ', token.address);
     let symbol = await token.symbol();
-    console.log('[2] Created token\'s symbol: ', symbol);
+    console.log('[2] Created token1\'s symbol: ', symbol);
+
+    // Using TronWeb
+    let instance = await ERC20Token.new("FirstToken2", "FTT2", 18, tronWrap.address.toHex(accounts));
+    let token2 = await tronWeb.contract(instance.abi, instance.address);
+    console.log('[2] Token2 address: ', token2.address);
+    let symbol2 = await token2.symbol().call();
+    console.log('[2] Created token2\'s symbol: ', symbol2);
 
   }).then(async ()=>{ // Create token using TokenFactory
     await deployer.deploy(TokenFactory);
