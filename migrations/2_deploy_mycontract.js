@@ -37,8 +37,9 @@ module.exports = function (deployer, networkName, accounts) {
 
     let factory = await TokenFactory.deployed();
     console.log('[3] Factory address: ', factory.address);
-
+    const myAccount = tronWrap.address.toHex(accounts);
     let tokenFactory = await tronWeb.contract(factory.abi, factory.address);
+  
     let tokenAddress = await tokenFactory.createERC20Token("SecondToken1", "STT1", 18, tronWrap.address.toHex(accounts)).send({ shouldPollResponse: true });
     console.log('[3] Token address: ', tokenAddress);
 
@@ -85,6 +86,15 @@ module.exports = function (deployer, networkName, accounts) {
     let tokenAddress = await tokenFactory.createERC20Token("SecondToken2", "STT2", 18, tronWrap.address.toHex(accounts)).send({ shouldPollResponse: true });
     console.log('[4] Token address: ', tokenAddress);
 
+    // use proxy: begin
+    const tokenSymbolFromFactory = await tokenFactory.getTokenSymbol(tokenAddress).call();
+    console.log('[44] Token symbol: ', tokenSymbolFromFactory);
+
+    await tokenFactory.mintToken(tokenAddress, myAccount, 10).send({shouldPollResponse: true});
+    const tokenbalanceOfFromFactory = await tokenFactory.balanceOf(tokenAddress, myAccount).call();
+    console.log('[44] Token balance: ', tokenbalanceOfFromFactory);
+    // use proxy: end
+    
     let token = await tronWeb.contract(ERC20Token.abi, tokenAddress);
     console.log('[4] Token address: ', token.address);
 
