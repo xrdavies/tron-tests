@@ -7,7 +7,7 @@ import "./IERC20Token.sol";
 contract TokenFactory {
     address private _primary;
 
-    mapping (address => IERC20Token) mappedTokens;
+    mapping (address => IERC20Token) public mappedTokens;
 
     event ERC20TokenCreated(address indexed sideToken, string symbol, uint8 decimals);
 

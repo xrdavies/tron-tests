@@ -63,6 +63,16 @@ module.exports = function (deployer, networkName, accounts) {
     let receipt = await tokenFactory.acceptTransfer(mainToken.address, myAccount, 10000).send({shouldPollResponse: true});
     console.log('[Create by script, managed by factory] acceptTransfer: ', receipt);
 
+    let sideTokenAddress = await  tokenFactory.mappedTokens(mainToken.address).call();
+    console.log('[Create by script, managed by factory] re-get side token address: ', sideTokenAddress);
+
+    let sideToken = await tronWeb.contract(ERC20Token.abi, sideTokenAddress);
+    let symbol = await sideToken.symbol().call();
+    console.log('[Create by script, managed by factory] side token symbol: ', symbol);
+
+    let balance = await sideToken.balanceOf(myAccount).call();
+    console.log('[Create by script, managed by factory] my balance: ', balance.toString());
+
   }).then(async () => { // Create token through TokenFactory and call methods through proxy
     await deployer.deploy(TokenFactory);
 
