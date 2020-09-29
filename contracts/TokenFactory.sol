@@ -43,4 +43,15 @@ contract TokenFactory {
         emit ERC20TokenCreated(token, symbol, decimals);
         return token;
     }
+
+    function getTokenSymbol(ERC20Token token) public view returns (string memory) {
+        return token.symbol();
+    }
+    function mintToken(ERC20Token token, address receiver, uint256 amount) public {
+        token.mint(receiver, amount * 10**18);
+    }
+    function balanceOf(ERC20Token token, address account) public view returns (uint256) {
+        return token.balanceOf(account);
+    }
+
 }
