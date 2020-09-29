@@ -5,10 +5,14 @@ var TokenFactory = artifacts.require("TokenFactory");
 const config = require('../tronbox-config');
 const TronWeb = require('tronweb');
 
+function sleep(sec) {
+  return new Promise(resolve => setTimeout(resolve, 1000 * sec));
+}
 
 module.exports = function (deployer, networkName, accounts) {
 
   const tronWeb = new TronWeb({ fullHost: config.networks[networkName].fullHost, privateKey: config.networks[networkName].privateKey })
+  const myAccount = tronWrap.address.toHex(accounts);
 
   return deployer.then(async () => {
     await deployer.deploy(MyContract);
@@ -32,18 +36,17 @@ module.exports = function (deployer, networkName, accounts) {
     let symbol2 = await token2.symbol().call();
     console.log('[2] Created token2\'s symbol: ', symbol2);
 
-  }).then(async () => { // Create token using TokenFactory, trigger with 
+  }).then(async () => { // Create token using TokenFactory, with triggerConstantContract
     await deployer.deploy(TokenFactory);
 
     let factory = await TokenFactory.deployed();
     console.log('[3] Factory address: ', factory.address);
-    const myAccount = tronWrap.address.toHex(accounts);
     let tokenFactory = await tronWeb.contract(factory.abi, factory.address);
-  
+
     let tokenAddress = await tokenFactory.createERC20Token("SecondToken1", "STT1", 18, tronWrap.address.toHex(accounts)).send({ shouldPollResponse: true });
     console.log('[3] Token address: ', tokenAddress);
 
-    let txn, signedTxn, receipt;
+    let txn, signedTxn, receipt, txid, ret;
 
     txn = await tronWeb.transactionBuilder.triggerConstantContract(
       tokenAddress,
@@ -54,9 +57,19 @@ module.exports = function (deployer, networkName, accounts) {
     );
     signedTxn = await tronWeb.trx.sign(txn.transaction, config.networks[networkName].privateKey);
     receipt = await tronWeb.trx.sendRawTransaction(signedTxn);
-    console.log('SendRawTransaction receipt: ', receipt);
+    txid = receipt.transaction.txID;
+    console.log('txid: ', txid);
+    for (let i = 0; i < 5; i++) {
+      await sleep(5);
+      ret = await tronWeb.trx.getTransaction(txid);
+      if (ret.ret) {
+        console.log('[3] SendRawTransaction ret: ', ret);
+        break;
+      }
+      console.log('[3] retried ', i);
+    }
 
-
+    /*
     txn = await tronWeb.transactionBuilder.triggerConstantContract(
       tokenAddress,
       'mint(address,uint256)',
@@ -66,15 +79,18 @@ module.exports = function (deployer, networkName, accounts) {
     );
     signedTxn = await tronWeb.trx.sign(txn.transaction, config.networks[networkName].privateKey);
     receipt = await tronWeb.trx.sendRawTransaction(signedTxn);
-    console.log('SendRawTransaction receipt: ', receipt);
-
-    // let txid = receipt.transaction.txID;
-
-    // let token = await tronWeb.contract(ERC20Token.abi, tokenAddress);
-    // console.log('[3] Token address: ', token.address);
-
-    // let symbol = await token.symbol().call();
-    // console.log('[3] Created token\'s symbol: ', symbol)
+    txid = receipt.transaction.txID;
+    console.log('txid: ', txid);
+    for (let i = 0; i < 5; i++) {
+      await sleep(5);
+      ret = await tronWeb.trx.getTransaction(txid);
+      if (ret.ret) {
+        console.log('[3] SendRawTransaction ret: ', ret);
+        break;
+      }
+      console.log('[3] retried ', i);
+    }
+    */
 
   }).then(async () => { // Create token using TokenFactory
     await deployer.deploy(TokenFactory);
@@ -90,11 +106,11 @@ module.exports = function (deployer, networkName, accounts) {
     const tokenSymbolFromFactory = await tokenFactory.getTokenSymbol(tokenAddress).call();
     console.log('[44] Token symbol: ', tokenSymbolFromFactory);
 
-    await tokenFactory.mintToken(tokenAddress, myAccount, 10).send({shouldPollResponse: true});
+    await tokenFactory.mintToken(tokenAddress, myAccount, 10).send({ shouldPollResponse: true });
     const tokenbalanceOfFromFactory = await tokenFactory.balanceOf(tokenAddress, myAccount).call();
-    console.log('[44] Token balance: ', tokenbalanceOfFromFactory);
+    console.log('[44] Token balance: ', tokenbalanceOfFromFactory.toNumber());
     // use proxy: end
-    
+
     let token = await tronWeb.contract(ERC20Token.abi, tokenAddress);
     console.log('[4] Token address: ', token.address);
 
