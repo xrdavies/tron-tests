@@ -44,14 +44,17 @@ contract TokenFactory {
         return token;
     }
 
-    function getTokenSymbol(ERC20Token token) public view returns (string memory) {
-        return token.symbol();
+    function getTokenSymbol(address tokenAddress) public view returns (string memory) {
+
+        return ERC20Token(tokenAddress).symbol();
     }
-    function mintToken(ERC20Token token, address receiver, uint256 amount) public {
-        token.mint(receiver, amount * 10**18);
+    function mintToken(address tokenAddress, address receiver, uint256 amount) public {
+
+        ERC20Token(tokenAddress).mint(receiver, amount * 10**18);
     }
-    function balanceOf(ERC20Token token, address account) public view returns (uint256) {
-        return token.balanceOf(account);
+    function balanceOf(address tokenAddress, address account) public view returns (uint256) {
+
+        return ERC20Token(tokenAddress).balanceOf(account);
     }
 
 }
