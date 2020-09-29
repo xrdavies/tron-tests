@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.8.0;
+pragma solidity ^0.5.0;
 
 import "./Context.sol";
 import "./IERC20.sol";
@@ -41,7 +41,7 @@ contract ERC20 is Context, IERC20 {
     /**
      * @dev See {IERC20-totalSupply}.
      */
-    function totalSupply() public view returns (uint256) {
+    function  totalSupply() public view returns (uint256)  {
         return _totalSupply;
     }
 
