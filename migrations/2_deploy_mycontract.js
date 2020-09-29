@@ -13,25 +13,36 @@ module.exports = function(deployer, networkName, accounts) {
     await deployer.deploy(MyContract);
     let contract = await MyContract.deployed();
     let ver = await contract.version();
-    console.log("MyContract Version: ", ver);
-    console.log('MyContract Address: ', MyContract.address);
+    console.log("[1] MyContract Version: ", ver);
+    console.log('[1] MyContract Address: ', MyContract.address);
 
-  }).then(async ()=>{
+  }).then(async ()=>{ // Create token directly with script
+    await deployer.deploy(ERC20Token, "FirstToken", "FTT", 18, tronWrap.address.toHex(accounts));
 
-    let factory = await deployer.deploy(TokenFactory);
-    console.log('Factory address: ', factory.address);
+    let token = await ERC20Token.deployed();
+    console.log('[2] Token address: ', token.address);
+
+    let symbol = await token.symbol();
+    console.log('[2] Created token\'s symbol: ', symbol);
+
+  }).then(async ()=>{ // Create token using TokenFactory
+    await deployer.deploy(TokenFactory);
+
+    let factory = await TokenFactory.deployed();
+    console.log('[3] Factory address: ', factory.address);
 
     let tokenFactory = await tronWeb.contract(factory.abi, factory.address);
-    let tokenAddress = await tokenFactory.createERC20Token("TestToken", "TT", 18, tronWrap.address.toHex(accounts)).send({shouldPollResponse: true});
-    console.log('Token address: ', tokenAddress);
+    let tokenAddress = await tokenFactory.createERC20Token("SecondToken", "STT", 18, tronWrap.address.toHex(accounts)).send({shouldPollResponse: true});
+    console.log('[3] Token address: ', tokenAddress);
 
     let token = await tronWeb.contract(ERC20Token.abi, tokenAddress);
-    console.log('Token address: ', token.address);
+    console.log('[3] Token address: ', token.address);
 
     let symbol = await token.symbol().call();
-    console.log('Created token\'s symbol: ', symbol)
+    console.log('[3] Created token\'s symbol: ', symbol)
 
   }).then(async () =>  {
       // WTF
+      console.log('WTF: We have done this job!!!')
   });
 };
