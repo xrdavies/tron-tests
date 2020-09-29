@@ -5,18 +5,19 @@ var TokenFactory = artifacts.require("TokenFactory");
 const config = require('../tronbox-config');
 const TronWeb = require('tronweb');
 
-module.exports = function(deployer, networkName, accounts) {
+
+module.exports = function (deployer, networkName, accounts) {
 
   const tronWeb = new TronWeb({ fullHost: config.networks[networkName].fullHost, privateKey: config.networks[networkName].privateKey })
 
-  return deployer.then(async ()=> {
+  return deployer.then(async () => {
     await deployer.deploy(MyContract);
     let contract = await MyContract.deployed();
     let ver = await contract.version();
     console.log("[1] MyContract Version: ", ver);
     console.log('[1] MyContract Address: ', MyContract.address);
 
-  }).then(async ()=>{ // Create token directly with script
+  }).then(async () => { // Create token directly with script
     // Using TronBox
     await deployer.deploy(ERC20Token, "FirstToken", "FTT", 18, tronWrap.address.toHex(accounts));
     let token = await ERC20Token.deployed();
@@ -31,24 +32,67 @@ module.exports = function(deployer, networkName, accounts) {
     let symbol2 = await token2.symbol().call();
     console.log('[2] Created token2\'s symbol: ', symbol2);
 
-  }).then(async ()=>{ // Create token using TokenFactory
+  }).then(async () => { // Create token using TokenFactory, trigger with 
     await deployer.deploy(TokenFactory);
 
     let factory = await TokenFactory.deployed();
     console.log('[3] Factory address: ', factory.address);
 
     let tokenFactory = await tronWeb.contract(factory.abi, factory.address);
-    let tokenAddress = await tokenFactory.createERC20Token("SecondToken", "STT", 18, tronWrap.address.toHex(accounts)).send({shouldPollResponse: true});
+    let tokenAddress = await tokenFactory.createERC20Token("SecondToken1", "STT1", 18, tronWrap.address.toHex(accounts)).send({ shouldPollResponse: true });
     console.log('[3] Token address: ', tokenAddress);
 
+    let txn, signedTxn, receipt;
+
+    txn = await tronWeb.transactionBuilder.triggerConstantContract(
+      tokenAddress,
+      'symbol()',
+      {},
+      [],
+      tronWrap.address.toHex(accounts)
+    );
+    signedTxn = await tronWeb.trx.sign(txn.transaction, config.networks[networkName].privateKey);
+    receipt = await tronWeb.trx.sendRawTransaction(signedTxn);
+    console.log('SendRawTransaction receipt: ', receipt);
+
+
+    txn = await tronWeb.transactionBuilder.triggerConstantContract(
+      tokenAddress,
+      'mint(address,uint256)',
+      {},
+      [accounts, 10000000000],
+      tronWrap.address.toHex(accounts)
+    );
+    signedTxn = await tronWeb.trx.sign(txn.transaction, config.networks[networkName].privateKey);
+    receipt = await tronWeb.trx.sendRawTransaction(signedTxn);
+    console.log('SendRawTransaction receipt: ', receipt);
+
+    // let txid = receipt.transaction.txID;
+
+    // let token = await tronWeb.contract(ERC20Token.abi, tokenAddress);
+    // console.log('[3] Token address: ', token.address);
+
+    // let symbol = await token.symbol().call();
+    // console.log('[3] Created token\'s symbol: ', symbol)
+
+  }).then(async () => { // Create token using TokenFactory
+    await deployer.deploy(TokenFactory);
+
+    let factory = await TokenFactory.deployed();
+    console.log('[4] Factory address: ', factory.address);
+
+    let tokenFactory = await tronWeb.contract(factory.abi, factory.address);
+    let tokenAddress = await tokenFactory.createERC20Token("SecondToken2", "STT2", 18, tronWrap.address.toHex(accounts)).send({ shouldPollResponse: true });
+    console.log('[4] Token address: ', tokenAddress);
+
     let token = await tronWeb.contract(ERC20Token.abi, tokenAddress);
-    console.log('[3] Token address: ', token.address);
+    console.log('[4] Token address: ', token.address);
 
     let symbol = await token.symbol().call();
-    console.log('[3] Created token\'s symbol: ', symbol)
+    console.log('[4] Created token\'s symbol: ', symbol)
 
-  }).then(async () =>  {
-      // WTF
-      console.log('WTF: We have done this job!!!')
+  }).then(async () => {
+    // WTF
+    console.log('WTF: We have done this job!!!')
   });
 };
